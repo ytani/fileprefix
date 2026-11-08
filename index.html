@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>file prefix</title>
+<style>
+  :root { --bg:#ffffff; --fg:#1a1a1a; --sub:#666666; --accent:#2563eb; --card:#f3f4f6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181d; --fg:#f0f0f0; --sub:#9aa0aa; --accent:#6ea8fe; --card:#232730; }
+  }
+  html, body { height:100%; margin:0; }
+  body {
+    background:var(--bg); color:var(--fg);
+    font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
+    display:flex; align-items:center; justify-content:center;
+  }
+  main { text-align:center; padding:24px; }
+  #prefix {
+    font-family:ui-monospace, Consolas, monospace;
+    font-size:clamp(2rem, 10vw, 4rem);
+    background:var(--card); border-radius:12px;
+    padding:20px 32px; cursor:pointer; user-select:all;
+    display:inline-block;
+  }
+  #msg { color:var(--sub); margin-top:16px; min-height:1.5em; }
+  button {
+    margin-top:12px; font-size:1rem; padding:10px 24px;
+    border:0; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer;
+  }
+  small { display:block; margin-top:24px; color:var(--sub); }
+</style>
+</head>
+<body>
+<main>
+  <div id="prefix" title="クリックでコピー"></div>
+  <div><button id="copy">コピー</button></div>
+  <div id="msg"></div>
+  <small id="detail"></small>
+</main>
+<script>
+// 年コード: 2026 = A, 2027 = B, ...
+function yearLetter(y) {
+  return String.fromCharCode("A".charCodeAt(0) + (y - 2026));
+}
+
+// hourcode.py と同じロジック
+function hourCode(h, m) {
+  if (h < 10) return "a";
+  const slot = (h - 10) * 2 + Math.floor(m / 30);
+  if (slot >= 24) return "z";
+  return String.fromCharCode("b".charCodeAt(0) + slot);
+}
+
+function build(now) {
+  const pad = n => String(n).padStart(2, "0");
+  return yearLetter(now.getFullYear())
+    + pad(now.getMonth() + 1) + pad(now.getDate())
+    + hourCode(now.getHours(), now.getMinutes()) + "_";
+}
+
+const el = document.getElementById("prefix");
+const msg = document.getElementById("msg");
+const detail = document.getElementById("detail");
+
+function render() {
+  const now = new Date();
+  el.textContent = build(now);
+  detail.textContent = now.toLocaleString("ja-JP");
+}
+
+async function copy() {
+  try {
+    await navigator.clipboard.writeText(el.textContent);
+    msg.textContent = "コピーしました: " + el.textContent;
+  } catch (e) {
+    msg.textContent = "コピーできませんでした。文字列を選択してコピーしてください。";
+  }
+}
+
+el.addEventListener("click", copy);
+document.getElementById("copy").addEventListener("click", copy);
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>
